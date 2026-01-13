@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Pembelian - Daily Cotton</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="navbar">
+    <div class="logo">DAILY COTTON</div>
+</header>
+
+<div class="main">
+    <h2>Detail Pembelian</h2>
+
+    <div class="card" style="max-width:400px">
+        <div class="color-box" id="warnaBox"></div>
+        <h4 id="namaWarna"></h4>
+        <p id="namaProduk"></p>
+        <small id="ketebalan"></small>
+
+        <div class="price" id="harga"></div>
+
+        <button onclick="konfirmasi()">KONFIRMASI PESANAN</button>
+    </div>
+</div>
+
+<script>
+    const data = JSON.parse(localStorage.getItem("produkDipilih"));
+
+    document.getElementById("warnaBox").classList.add(data.warnaBox);
+    document.getElementById("namaWarna").innerText = data.warna;
+    document.getElementById("namaProduk").innerText = data.nama;
+    document.getElementById("ketebalan").innerText = data.ketebalan;
+    document.getElementById("harga").innerText =
+        "Rp" + data.harga.toLocaleString("id-ID");
+
+    function konfirmasi() {
+        alert("Pesanan berhasil dibuat!");
+        window.location.href = "user_dashboard.html";
+    }
+</script>
+
+</body>
+</html>

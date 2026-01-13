@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Beli Produk - Daily Cotton</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; }
+        .checkout-container { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 0 20px rgba(0,0,0,0.1); margin-top: 30px; }
+        .color-preview { color: white; display: flex; align-items: center; justify-content: center; flex-direction: column; min-height: 500px; transition: 0.5s; position: relative; }
+        .price-label { color: #dc3545; font-weight: bold; font-size: 1.5rem; }
+        .estimasi-box { background: #1a1a1a; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-radius: 8px; }
+        
+        .payment-tab { border: 1px solid #dee2e6; padding: 10px; text-align: center; cursor: pointer; font-weight: bold; transition: 0.3s; background: #f8f9fa; }
+        .payment-tab.active { background: #dc3545; color: white; border-color: #dc3545; }
+        .payment-content { display: none; background: #f1f3f5; border-radius: 8px; padding: 20px; text-align: center; margin-top: 10px; }
+        .payment-content.active { display: block; }
+        
+        .va-number { font-size: 1.4rem; font-weight: bold; color: #0056b3; letter-spacing: 1px; }
+        .badge-kategori { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; }
+    </style>
+</head>
+<body class="p-4">
+
+<div class="container checkout-container">
+    <div class="row">
+        <div id="boxWarna" class="col-md-5 color-preview">
+            <div class="badge-kategori">Premium Quality</div>
+            <i class="bi bi-box-seam text-white opacity-50" style="font-size: 5rem;"></i>
+            <h2 id="textWarna" class="fw-bold text-center px-3 text-uppercase mt-3">NAMA WARNA</h2>
+            <p id="textDesc" class="small opacity-75">Bahan Cotton Combed Terbaik</p>
+        </div>
+
+        <div class="col-md-7 p-4">
+            <h2 id="textNama" class="fw-bold mb-1">NAMA BAHAN</h2>
+            <p class="price-label mb-4">Rp<span id="textHarga">0</span> <span class="text-muted fw-normal fs-6">/kg</span></p>
+            
+            <div class="row mb-3">
+                <div class="col-6">
+                    <label class="small fw-bold mb-1"><i class="bi bi-layers"></i> OPSI KETEBALAN</label>
+                    <select class="form-select" id="textTebal" onchange="updateVarian()"></select>
+                </div>
+                <div class="col-6">
+                    <label class="small fw-bold mb-1"><i class="bi bi-weight"></i> JUMLAH (KG)</label>
+                    <input type="number" id="inQty" class="form-control" placeholder="0.00" step="0.01" oninput="hitungTotal()">
+                    <small class="text-danger fw-bold">* Minimal pembelian 1.5 kg</small>
+                </div>
+            </div>
+
+            <div class="estimasi-box mb-4">
+                <span>TOTAL PEMBAYARAN:</span>
+                <span class="fs-4 fw-bold">Rp <span id="totalHarga">0</span></span>
+            </div>
+
+            <label class="small fw-bold d-block mb-2 text-uppercase">Metode Pembayaran:</label>
+            <div class="row g-0 mb-2">
+                <div class="col-6 payment-tab active" id="tabQris" onclick="switchPayment('qris')">
+                    <i class="bi bi-qr-code"></i> QRIS
+                </div>
+                <div class="col-6 payment-tab" id="tabTransfer" onclick="switchPayment('transfer')">
+                    <i class="bi bi-bank"></i> TRANSFER BCA
+                </div>
+            </div>
+
+            <div id="contentQris" class="payment-content active">
+                <p class="small mb-2">Scan QRIS melalui aplikasi Mobile Banking atau E-Wallet</p>
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=DailyCottonPayment" width="120" alt="QRIS" class="border p-1 bg-white">
+            </div>
+
+            <div id="contentTransfer" class="payment-content">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/5/5c/Bank_Central_Asia.svg" width="80" class="mb-2" alt="BCA">
+                <div class="va-number">8830 0812 3456 7890</div>
+                <div class="small text-muted text-uppercase">A/N Daily Cotton Indonesia</div>
+            </div>
+
+            <div class="d-flex gap-2 mt-4">
+                <button class="btn btn-outline-secondary w-100 py-2 fw-bold" onclick="history.back()">KEMBALI</button>
+                <button class="btn btn-danger w-100 py-2 fw-bold" onclick="prosesBayar()">KONFIRMASI BAYAR</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let varianTersedia = [];
+    let selectedProduk = null;
+
+    function getWarnaHex(warna) {
+        const colors = {
+            "PASTEL GREEN": "#b2d8b2", "ROYAL BENHUR": "#002366", "WHITE NETRAL": "#ffffff",
+            "DUSTY PINK": "#dcaebb", "COFFEE": "#4b3621", "BLACK NT": "#1a1a1a",
+            "NAVY": "#000080", "SYCAMORE": "#444c38", "OLIVE": "#556b2f",
+            "BEIGE": "#d4be8d", "TEAL BLUE": "#008080", "DEEP BLUE": "#00008b",
+            "TURQUISE": "#40e0d0", "BABY PINK": "#f4c2c2", "FANTA": "#fb1d8d",
+            "BUBBLE GUM": "#ffc1cc", "LEMON": "#fff44f", "BABY YELLOW": "#ffffed",
+            "SKY BLUE": "#87ceeb", "MISTY 71": "#b3b3b3", "MINT": "#98ff98",
+            "PLACID BLUE": "#87add7", "ROYAL LILAC": "#7851a9", "IRISH BLUE": "#0080ff"
+        };
+        const hex = colors[warna.toUpperCase()] || "#cccccc";
+        document.getElementById("boxWarna").style.color = (hex.toLowerCase() === "#ffffff") ? "#000000" : "#ffffff";
+        return hex;
+    }
+
+    function switchPayment(method) {
+        document.querySelectorAll('.payment-tab').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.payment-content').forEach(el => el.classList.remove('active'));
+        if(method === 'qris') {
+            document.getElementById('tabQris').classList.add('active');
+            document.getElementById('contentQris').classList.add('active');
+        } else {
+            document.getElementById('tabTransfer').classList.add('active');
+            document.getElementById('contentTransfer').classList.add('active');
+        }
+    }
+
+    function init() {
+        const selNama = localStorage.getItem("selectedNama");
+        const selWarna = localStorage.getItem("selectedWarna");
+        const allData = JSON.parse(localStorage.getItem("material")) || [];
+        varianTersedia = allData.filter(d => d.nama === selNama && d.warna === selWarna);
+
+        if(varianTersedia.length > 0) {
+            document.getElementById("textNama").innerText = selNama;
+            document.getElementById("textWarna").innerText = selWarna;
+            document.getElementById("boxWarna").style.backgroundColor = getWarnaHex(selWarna);
+            
+            const select = document.getElementById("textTebal");
+            select.innerHTML = "";
+            varianTersedia.forEach(v => {
+                select.innerHTML += `<option value="${v.id}">${v.gsm} GSM</option>`;
+            });
+            updateVarian();
+        }
+    }
+
+    function updateVarian() {
+        const id = document.getElementById("textTebal").value;
+        selectedProduk = varianTersedia.find(v => v.id == id);
+        document.getElementById("textHarga").innerText = selectedProduk.harga.toLocaleString("id-ID");
+        hitungTotal();
+    }
+
+    function hitungTotal() {
+        if(!selectedProduk) return;
+        let qty = parseFloat(document.getElementById("inQty").value) || 0;
+        let total = qty * selectedProduk.harga;
+        document.getElementById("totalHarga").innerText = total.toLocaleString("id-ID");
+    }
+
+    function prosesBayar() {
+    let qty = parseFloat(document.getElementById("inQty").value);
+    if(!qty || qty < 1.5) return alert("Minimal pembelian adalah 1.5 Kg!");
+
+    const totalBayar = qty * selectedProduk.harga;
+    const namaUser = "Pelanggan Umum"; // Ini bisa diganti dengan input nama jika ada
+
+    const order = {
+        id: "#DC-" + Math.floor(1000 + Math.random() * 9000),
+        nama: namaUser,
+        produk: selectedProduk.nama,
+        warna: selectedProduk.warna,
+        tebal: selectedProduk.gsm,
+        qty: qty,
+        total: totalBayar,
+        tanggal: new Date().toLocaleString('id-ID'),
+        status: "Lunas"
+    };
+
+    // --- LOGIKA DATA PELANGGAN ---
+    let pelanggan = JSON.parse(localStorage.getItem("daftar_pelanggan")) || [];
+    
+    // Cek apakah pelanggan sudah pernah beli sebelumnya
+    let indexPelanggan = pelanggan.findIndex(p => p.nama === namaUser);
+    
+    if (indexPelanggan === -1) {
+        // Jika pelanggan baru, tambahkan ke daftar
+        pelanggan.push({
+            nama: namaUser,
+            totalTransaksi: 1,
+            totalBelanja: totalBayar,
+            terakhirBeli: order.tanggal
+        });
+    } else {
+        // Jika pelanggan lama, update datanya
+        pelanggan[indexPelanggan].totalTransaksi += 1;
+        pelanggan[indexPelanggan].totalBelanja += totalBayar;
+        pelanggan[indexPelanggan].terakhirBeli = order.tanggal;
+    }
+    localStorage.setItem("daftar_pelanggan", JSON.stringify(pelanggan));
+    // ------------------------------
+
+    // Simpan data transaksi seperti biasa
+    localStorage.setItem("last_order", JSON.stringify(order));
+    let daftarPesanan = JSON.parse(localStorage.getItem("pesanan")) || [];
+    daftarPesanan.unshift(order);
+    localStorage.setItem("pesanan", JSON.stringify(daftarPesanan));
+
+    window.location.href = "struk_berhasil.html";
+}
+</script>
+</body>
+</html>
